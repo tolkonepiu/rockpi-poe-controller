@@ -1,4 +1,4 @@
-FROM alpine:3.18 AS builder
+FROM alpine:3.22.1 AS builder
 
 RUN apk add --no-cache \
     build-base \
@@ -24,19 +24,19 @@ RUN git clone https://github.com/eclipse/mraa.git && \
     make -j$(nproc) && \
     make install
 
-FROM alpine:3.18
+FROM alpine:3.22.1
 
 RUN apk add --no-cache \
     python3 \
     json-c
 
-COPY --from=builder /usr/local/lib/python3.11/site-packages/ /usr/local/lib/python3.11/site-packages/
+COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
 COPY --from=builder /usr/local/lib/libmraa* /usr/local/lib/
 COPY --from=builder /usr/local/include/mraa* /usr/local/include/
 
 RUN ldconfig /usr/local/lib
 
-ENV PYTHONPATH=/usr/local/lib/python3.11/site-packages:$PYTHONPATH
+ENV PYTHONPATH=/usr/local/lib/python3.12/site-packages:$PYTHONPATH
 
 WORKDIR /app
 COPY rockpi-poe.py .
