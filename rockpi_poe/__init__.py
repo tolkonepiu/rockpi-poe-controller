@@ -1,11 +1,10 @@
-"""ROCK Pi 23W PoE HAT Fan Controller.
+"""ROCK Pi 23W PoE HAT Controller.
 
-A modern Python implementation for managing fans on ROCK Pi 23W PoE HAT
-with temperature monitoring, Prometheus metrics, and comprehensive testing.
+A Python implementation for managing fans on ROCK Pi 23W PoE HAT
+with temperature monitoring and Prometheus metrics.
 """
 
-__version__ = "1.0.0"
-__author__ = "ROCK Pi Community"
+__version__ = "0.1.0"
 
 from .config import Config
 from .controller import FanController

@@ -31,32 +31,22 @@ class MetricsCollector:
             "Current temperature in Celsius",
             ["sensor_type"]
         )
-        
-        self.temperature_histogram = Histogram(
-            "rockpi_poe_temperature_measurements",
-            "Temperature measurements",
-            ["sensor_type"],
-            buckets=[20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80]
-        )
 
         # Fan metrics
         self.fan_speed_gauge = Gauge(
             "rockpi_poe_fan_speed_percent",
-            "Current fan speed as percentage",
-            ["fan_id"]
+            "Current fan speed as percentage"
         )
         
         self.fan_enabled_gauge = Gauge(
             "rockpi_poe_fan_enabled",
-            "Fan enabled status (1=enabled, 0=disabled)",
-            ["fan_id"]
+            "Fan enabled status (1=enabled, 0=disabled)"
         )
 
         # Control metrics
         self.fan_speed_changes_total = Gauge(
             "rockpi_poe_fan_speed_changes_total",
-            "Total number of fan speed changes",
-            ["fan_id"]
+            "Total number of fan speed changes"
         )
 
         # System metrics
@@ -106,33 +96,30 @@ class MetricsCollector:
             sensor_type: Type of sensor (e.g., 'adc', 'cpu', 'gpu', 'composite')
         """
         self.temperature_gauge.labels(sensor_type=sensor_type).set(temperature)
-        self.temperature_histogram.labels(sensor_type=sensor_type).observe(temperature)
         
         logger.debug("Temperature metrics updated", temperature=temperature, sensor_type=sensor_type)
 
-    def update_fan_speed(self, speed_percent: float, fan_id: str = "main") -> None:
+    def update_fan_speed(self, speed_percent: float) -> None:
         """Update fan speed metrics.
         
         Args:
             speed_percent: Fan speed as percentage (0-100)
-            fan_id: Fan identifier
         """
-        self.fan_speed_gauge.labels(fan_id=fan_id).set(speed_percent)
-        self.fan_speed_changes_total.labels(fan_id=fan_id).inc()
+        self.fan_speed_gauge.set(speed_percent)
+        self.fan_speed_changes_total.inc()
         
-        logger.debug("Fan speed metrics updated", speed_percent=speed_percent, fan_id=fan_id)
+        logger.debug("Fan speed metrics updated", speed_percent=speed_percent)
 
-    def update_fan_enabled(self, enabled: bool, fan_id: str = "main") -> None:
+    def update_fan_enabled(self, enabled: bool) -> None:
         """Update fan enabled status metrics.
         
         Args:
             enabled: Whether fan is enabled
-            fan_id: Fan identifier
         """
         value = 1 if enabled else 0
-        self.fan_enabled_gauge.labels(fan_id=fan_id).set(value)
+        self.fan_enabled_gauge.set(value)
         
-        logger.debug("Fan enabled metrics updated", enabled=enabled, fan_id=fan_id)
+        logger.debug("Fan enabled metrics updated", enabled=enabled)
 
     def update_uptime(self, uptime_seconds: float) -> None:
         """Update controller uptime metric.

@@ -200,8 +200,9 @@ class FanController:
             else:
                 self.gpio.turn_off()
             self._current_enabled = enabled
-            self.metrics.update_fan_enabled(enabled)
-            
+
+        self.metrics.update_fan_enabled(self._current_enabled)
+
         # Update fan speed if changed
         if abs(duty_cycle - self._current_speed) > 0.01:  # Small threshold to avoid noise
             self.gpio.set_fan_speed(duty_cycle)

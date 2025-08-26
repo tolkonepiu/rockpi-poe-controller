@@ -1,4 +1,4 @@
-"""Command-line interface for ROCK Pi PoE HAT fan controller."""
+"""Command-line interface for ROCK Pi PoE HAT controller."""
 
 import argparse
 import json
@@ -48,7 +48,7 @@ def setup_logging(log_level: str = "INFO", log_format: str = "text") -> None:
 def create_parser() -> argparse.ArgumentParser:
     """Create command line argument parser."""
     parser = argparse.ArgumentParser(
-        description="ROCK Pi 23W PoE HAT Fan Controller",
+        description="ROCK Pi 23W PoE HAT Controller",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
