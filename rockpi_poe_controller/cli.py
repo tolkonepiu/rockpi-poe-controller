@@ -1,49 +1,25 @@
 """Command-line interface for ROCK Pi PoE HAT controller."""
 
 import argparse
+import logging
 import sys
-
-import structlog
 
 from .config import Config
 from .controller import FanController
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
-def setup_logging(log_level: str = "INFO", log_format: str = "text") -> None:
-    """Setup structured logging.
-
-    Args:
-        log_level: Logging level
-        log_format: Log format (json or text)
-    """
-    processors = [
-        structlog.stdlib.filter_by_level,
-        structlog.stdlib.add_logger_name,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.StackInfoRenderer(),
-        structlog.processors.format_exc_info,
-    ]
-
-    if log_format == "json":
-        processors.append(structlog.processors.JSONRenderer())
-    else:
-        processors.append(structlog.dev.ConsoleRenderer())
-
-    structlog.configure(
-        processors=processors,
-        context_class=dict,
-        logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.stdlib.BoundLogger,
-        cache_logger_on_first_use=True,
+def setup_logging(log_level: str = "INFO") -> None:
+    logging.basicConfig(
+        level=getattr(logging, log_level.upper(), logging.INFO),
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S',
+        stream=sys.stdout
     )
 
 
 def create_parser() -> argparse.ArgumentParser:
-    """Create command line argument parser."""
     parser = argparse.ArgumentParser(
         description="ROCK Pi 23W PoE HAT Controller",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -58,19 +34,7 @@ Examples:
         dest="command", help="Available commands")
 
     # Start command
-    start_parser = subparsers.add_parser("start", help="Start fan controller")
-    start_parser.add_argument(
-        "--log-level",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
-        default="INFO",
-        help="Logging level"
-    )
-    start_parser.add_argument(
-        "--log-format",
-        choices=["text", "json"],
-        default="text",
-        help="Log format"
-    )
+    subparsers.add_parser("start", help="Start fan controller")
 
     # Stop command
     subparsers.add_parser("stop", help="Stop fan controller")
@@ -78,15 +42,10 @@ Examples:
     return parser
 
 
-def start_controller(args: argparse.Namespace) -> None:
-    """Start the fan controller.
-
-    Args:
-        args: Command line arguments
-    """
+def start_controller() -> None:
     try:
         config = Config()
-        setup_logging(args.log_level, args.log_format)
+        setup_logging(config.log_level)
 
         controller = FanController(config)
         logger.info("Starting fan controller")
@@ -95,24 +54,21 @@ def start_controller(args: argparse.Namespace) -> None:
     except KeyboardInterrupt:
         logger.info("Received interrupt signal")
     except Exception as e:
-        logger.error("Failed to start controller", error=str(e))
+        logger.error("Failed to start controller: %s", str(e))
         sys.exit(1)
 
 
-def stop_controller(args: argparse.Namespace) -> None:
-    """Stop the fan controller.
-
-    Args:
-        args: Command line arguments
-    """
+def stop_controller() -> None:
     try:
-        config = Config.from_env()
+        config = Config()
+        setup_logging(config.log_level)
+
         controller = FanController(config)
         controller.stop()
         logger.info("Fan controller stopped")
 
     except Exception as e:
-        logger.error("Failed to stop controller", error=str(e))
+        logger.error("Failed to stop controller: %s", str(e))
         sys.exit(1)
 
 
@@ -138,7 +94,7 @@ def main() -> None:
         logger.info("Interrupted by user")
         sys.exit(0)
     except Exception as e:
-        logger.error("Unexpected error", error=str(e))
+        logger.error("Unexpected error: %s", str(e))
         sys.exit(1)
 
 

@@ -3,23 +3,19 @@
 
 class FanControllerError(Exception):
     """Base exception for fan controller errors."""
-
     pass
 
 
 class GPIOError(FanControllerError):
     """Exception raised when GPIO operations fail."""
-
     pass
 
 
 class SensorError(FanControllerError):
     """Exception raised when temperature sensor operations fail."""
-
     pass
 
 
 class HardwareNotAvailableError(FanControllerError):
     """Exception raised when required hardware is not available."""
-
     pass

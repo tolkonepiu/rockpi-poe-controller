@@ -1,15 +1,14 @@
 """Temperature sensor management for ROCK Pi PoE HAT."""
 
+import logging
 import os
 from abc import ABC, abstractmethod
 from typing import List
 
-import structlog
-
 from .exceptions import SensorError
 from .metrics import MetricsCollector
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class TemperatureSensor(ABC):
@@ -75,15 +74,11 @@ class ThermalZoneSensor(TemperatureSensor):
 class CompositeTemperatureSensor(TemperatureSensor):
     """Composite temperature sensor that reads from multiple sources."""
 
-    def __init__(self, sensors: List[TemperatureSensor],
-                 metrics_collector: MetricsCollector):
+    def __init__(self, sensors: List[TemperatureSensor], metrics_collector: MetricsCollector):
         self.sensors = sensors
         self.metrics_collector = metrics_collector
-        logger.info("Composite temperature sensor initialized",
-                    sensor_count=len(sensors))
 
     def is_available(self) -> bool:
-        """Check if any sensor in the composite is available."""
         return any(sensor.is_available() for sensor in self.sensors)
 
     def sensor_type(self) -> str:
@@ -91,23 +86,18 @@ class CompositeTemperatureSensor(TemperatureSensor):
 
     def read_temperature(self) -> float:
         temperatures = []
-        available_sensors = []
 
         for sensor in self.sensors:
             if sensor.is_available():
                 try:
                     temp = sensor.read_temperature()
                     temperatures.append(temp)
-                    available_sensors.append(sensor.sensor_type())
-                    self.metrics_collector.update_temperature(
-                        temp, sensor.sensor_type()
-                    )
+                    logger.debug("Sensor %s temperature: %.1f°C",
+                                 sensor.sensor_type(), temp)
                 except SensorError as e:
-                    logger.warning("Sensor read failed",
-                                   sensor=sensor.sensor_type(), error=str(e))
-                    self.metrics_collector.record_temperature_error(
-                        sensor.sensor_type()
-                    )
+                    logger.warning("Sensor %s failed: %s",
+                                   sensor.sensor_type(), str(e))
+                    self.metrics.record_temperature_error(sensor.sensor_type())
 
         if not temperatures:
             self.metrics_collector.record_temperature_error(self.sensor_type())
@@ -115,13 +105,6 @@ class CompositeTemperatureSensor(TemperatureSensor):
 
         max_temp = max(temperatures)
         self.metrics_collector.update_temperature(max_temp, self.sensor_type())
-
-        logger.debug(
-            "Composite temperature read",
-            temperatures=temperatures,
-            available_sensors=available_sensors,
-            max_temperature=max_temp
-        )
 
         return max_temp
 

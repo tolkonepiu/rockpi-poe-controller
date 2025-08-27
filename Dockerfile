@@ -48,16 +48,6 @@ RUN python3 -m venv /app/venv && \
     . /app/venv/bin/activate && \
     pip install --no-cache-dir -r requirements.txt
 
-ENV POE_LV0=40 \
-    POE_LV1=45 \
-    POE_LV2=50 \
-    POE_LV3=55 \
-    POE_UPDATE_INTERVAL=10.0 \
-    POE_METRICS_PORT=8000 \
-    POE_METRICS_HOST=0.0.0.0 \
-    POE_LOG_LEVEL=INFO \
-    POE_LOG_FORMAT=json
-
 # Metrics
 EXPOSE 8000
 

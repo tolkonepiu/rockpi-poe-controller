@@ -1,13 +1,13 @@
 """GPIO control for ROCK Pi PoE HAT fan management."""
 
+import logging
 from typing import Optional
 
 import mraa
-import structlog
 
 from .exceptions import GPIOError, HardwareNotAvailableError
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class GPIOController:
@@ -36,18 +36,18 @@ class GPIOController:
             # Initialize enable pin
             self._enable_gpio = mraa.Gpio(self.enable_pin)
             self._enable_gpio.dir(mraa.DIR_OUT)
-            logger.info("Enable GPIO pin initialized", pin=self.enable_pin)
+            logger.info("Enable GPIO pin initialized: %d", self.enable_pin)
 
             # Initialize PWM pin
             self._pwm_gpio = mraa.Pwm(self.pwm_pin)
             self._pwm_gpio.period_ms(13)  # Set PWM period to 13ms
             self._pwm_gpio.enable(True)
-            logger.info("PWM GPIO pin initialized", pin=self.pwm_pin)
+            logger.info("PWM GPIO pin initialized: %d", self.pwm_pin)
 
             self._is_initialized = True
 
         except Exception as e:
-            logger.error("Failed to initialize GPIO", error=str(e))
+            logger.error("Failed to initialize GPIO: %s", str(e))
             raise HardwareNotAvailableError(
                 f"GPIO initialization failed: {e}") from e
 
@@ -61,34 +61,18 @@ class GPIOController:
         return True
 
     def set_fan_enable(self, enabled: bool) -> None:
-        """Enable or disable fan.
-
-        Args:
-            enabled: True to enable fan, False to disable
-
-        Raises:
-            GPIOError: If GPIO operation fails
-        """
         if not self.is_available():
             raise GPIOError("GPIO controller not available")
 
         try:
             value = 1 if enabled else 0
             self._enable_gpio.write(value)
-            logger.info("Fan enable state changed",
-                        enabled=enabled, pin=self.enable_pin)
+            logger.info("Fan enable state changed: %s, pin: %d",
+                        enabled, self.enable_pin)
         except Exception as e:
             raise GPIOError(f"Failed to set fan enable: {e}") from e
 
     def set_fan_speed(self, duty_cycle: float) -> None:
-        """Set fan speed using PWM duty cycle.
-
-        Args:
-            duty_cycle: PWM duty cycle (0.0 to 1.0, where 1.0 is full speed)
-
-        Raises:
-            GPIOError: If GPIO operation fails
-        """
         if not self.is_available():
             raise GPIOError("GPIO controller not available")
 
@@ -101,10 +85,8 @@ class GPIOController:
             self._pwm_gpio.write(pwm_value)
 
             logger.debug(
-                "Fan speed changed",
-                duty_cycle=duty_cycle,
-                pwm_value=pwm_value,
-                pin=self.pwm_pin
+                "Fan speed changed: duty_cycle=%f, pwm_value=%f, pin: %d",
+                duty_cycle, pwm_value, self.pwm_pin
             )
         except Exception as e:
             raise GPIOError(f"Failed to set fan speed: {e}") from e
@@ -116,7 +98,7 @@ class GPIOController:
             self.set_fan_speed(1.0)  # Set PWM to off position
             logger.info("Fan turned off")
         except GPIOError as e:
-            logger.error("Failed to turn off fan", error=str(e))
+            logger.error("Failed to turn off fan: %s", str(e))
             raise
 
     def turn_on(self) -> None:
@@ -125,7 +107,7 @@ class GPIOController:
             self.set_fan_enable(True)
             logger.info("Fan turned on")
         except GPIOError as e:
-            logger.error("Failed to turn on fan", error=str(e))
+            logger.error("Failed to turn on fan: %s", str(e))
             raise
 
     def cleanup(self) -> None:
@@ -137,6 +119,6 @@ class GPIOController:
                 self.set_fan_speed(1.0)  # Turn off PWM
             logger.info("GPIO cleanup completed")
         except Exception as e:
-            logger.warning("Error during GPIO cleanup", error=str(e))
+            logger.warning("Error during GPIO cleanup: %s", str(e))
         finally:
             self._is_initialized = False

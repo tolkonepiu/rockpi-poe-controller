@@ -1,9 +1,8 @@
 """Main fan controller for ROCK Pi PoE HAT."""
 
+import logging
 import signal
 import time
-
-import structlog
 
 from .config import Config
 from .exceptions import FanControllerError, SensorError, GPIOError
@@ -11,18 +10,13 @@ from .gpio import GPIOController
 from .metrics import MetricsCollector
 from .sensors import create_default_sensor_suite
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class FanController:
     """Main fan controller for ROCK Pi PoE HAT."""
 
     def __init__(self, config: Config):
-        """Initialize fan controller.
-
-        Args:
-            config: Configuration object
-        """
         self.config = config
         self.metrics = MetricsCollector(
             host=config.metrics_host,
@@ -44,11 +38,11 @@ class FanController:
         signal.signal(signal.SIGINT, self._signal_handler)
         signal.signal(signal.SIGTERM, self._signal_handler)
 
-        logger.info("Fan controller initialized", config=config.dict())
+        logger.info("Fan controller initialized")
 
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals."""
-        logger.info("Received shutdown signal", signal=signum)
+        logger.info("Received shutdown signal: %s", signum)
         self.stop()
 
     def start(self) -> None:
@@ -73,7 +67,7 @@ class FanController:
             self._control_loop()
 
         except Exception as e:
-            logger.error("Failed to start controller", error=str(e))
+            logger.error("Failed to start controller: %s", str(e))
             self.stop()
             raise
 
@@ -104,7 +98,7 @@ class FanController:
             logger.info("Fan controller stopped")
 
         except Exception as e:
-            logger.error("Error during shutdown", error=str(e))
+            logger.error("Error during shutdown: %s", str(e))
 
     def _control_loop(self) -> None:
         """Main control loop for fan management."""
@@ -127,47 +121,34 @@ class FanController:
 
                 # Log status
                 logger.info(
-                    "Fan control status",
-                    temperature=temperature,
-                    speed_percent=speed_percent,
-                    duty_cycle=duty_cycle,
-                    enabled=self._current_enabled
+                    "Fan control status - temp: %.1f°C, speed: %.1f%%, duty: %.2f, enabled: %s",
+                    temperature, speed_percent, duty_cycle, self._current_enabled
                 )
 
             except SensorError as e:
-                logger.error("Sensor error in control loop", error=str(e))
+                logger.error("Sensor error in control loop: %s", str(e))
                 self.metrics.record_temperature_error()
 
             except GPIOError as e:
-                logger.error("GPIO error in control loop", error=str(e))
+                logger.error("GPIO error in control loop: %s", str(e))
                 self.metrics.record_gpio_error("control_loop")
 
             except Exception as e:
-                logger.error("Unexpected error in control loop", error=str(e))
+                logger.error("Unexpected error in control loop: %s", str(e))
             finally:
                 time.sleep(self.config.update_interval)
 
     def _calculate_fan_speed(self, temperature: float) -> tuple[float, float]:
-        """Calculate fan speed based on temperature.
-
-        Args:
-            temperature: Current temperature in Celsius
-
-        Returns:
-            Tuple of (speed_percent, duty_cycle)
-        """
-        levels = self.config.temperature_levels
-
-        if temperature >= levels.level_3:
+        if temperature >= self.config.lv3:
             speed_percent = 100.0
             duty_cycle = 0.0  # Full speed
-        elif temperature >= levels.level_2:
+        elif temperature >= self.config.lv2:
             speed_percent = 75.0
             duty_cycle = 0.25
-        elif temperature >= levels.level_1:
+        elif temperature >= self.config.lv1:
             speed_percent = 50.0
             duty_cycle = 0.5
-        elif temperature >= levels.level_0:
+        elif temperature >= self.config.lv0:
             speed_percent = 25.0
             duty_cycle = 0.75
         else:
@@ -177,12 +158,6 @@ class FanController:
         return speed_percent, duty_cycle
 
     def _apply_fan_control(self, speed_percent: float, duty_cycle: float) -> None:
-        """Apply fan control settings.
-
-        Args:
-            speed_percent: Fan speed as percentage
-            duty_cycle: PWM duty cycle
-        """
         # Determine if fan should be enabled
         enabled = speed_percent > 0.0
 

@@ -1,24 +1,19 @@
 """Prometheus metrics for ROCK Pi PoE HAT controller."""
 
+import logging
 import threading
 from typing import Optional
 
 from prometheus_client import Gauge, start_http_server
-import structlog
 
-logger = structlog.get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class MetricsCollector:
     """Collector for Prometheus metrics."""
 
     def __init__(self, host: str = "0.0.0.0", port: int = 8000):
-        """Initialize metrics collector.
-
-        Args:
-            host: Host to bind metrics server
-            port: Port to bind metrics server
-        """
+        """Initialize metrics collector"""
         self.host = host
         self.port = port
         self._server_thread: Optional[threading.Thread] = None
@@ -66,7 +61,8 @@ class MetricsCollector:
             ["operation"]
         )
 
-        logger.info("Metrics collector initialized", host=host, port=port)
+        logger.info(
+            "Metrics collector initialized - host: %s, port: %d", host, port)
 
     def start_server(self) -> None:
         """Start Prometheus metrics server."""
@@ -77,10 +73,10 @@ class MetricsCollector:
         try:
             start_http_server(self.port, addr=self.host)
             self._running = True
-            logger.info("Prometheus metrics server started",
-                        host=self.host, port=self.port)
+            logger.info("Prometheus metrics server started - host: %s, port: %d",
+                        self.host, self.port)
         except Exception as e:
-            logger.error("Failed to start metrics server", error=str(e))
+            logger.error("Failed to start metrics server: %s", str(e))
             raise
 
     def stop_server(self) -> None:
@@ -88,64 +84,33 @@ class MetricsCollector:
         self._running = False
         logger.info("Metrics server stopped")
 
-    def update_temperature(self, temperature: float, sensor_type: str = "composite") -> None:
-        """Update temperature metrics.
-
-        Args:
-            temperature: Temperature in Celsius
-            sensor_type: Type of sensor (e.g., 'adc', 'cpu', 'gpu', 'composite')
-        """
+    def update_temperature(self, temperature: float, sensor_type: str) -> None:
         self.temperature_gauge.labels(sensor_type=sensor_type).set(temperature)
 
-        logger.debug("Temperature metrics updated",
-                     temperature=temperature, sensor_type=sensor_type)
+        logger.debug("Temperature metrics updated - temp: %.1f°C, sensor: %s",
+                     temperature, sensor_type)
 
     def update_fan_speed(self, speed_percent: float) -> None:
-        """Update fan speed metrics.
-
-        Args:
-            speed_percent: Fan speed as percentage (0-100)
-        """
         self.fan_speed_gauge.set(speed_percent)
         self.fan_speed_changes_total.inc()
 
-        logger.debug("Fan speed metrics updated", speed_percent=speed_percent)
+        logger.debug("Fan speed metrics updated: %.1f%%", speed_percent)
 
     def update_fan_enabled(self, enabled: bool) -> None:
-        """Update fan enabled status metrics.
-
-        Args:
-            enabled: Whether fan is enabled
-        """
         value = 1 if enabled else 0
         self.fan_enabled_gauge.set(value)
 
-        logger.debug("Fan enabled metrics updated", enabled=enabled)
+        logger.debug("Fan enabled metrics updated: %s", enabled)
 
     def update_uptime(self, uptime_seconds: float) -> None:
-        """Update controller uptime metric.
-
-        Args:
-            uptime_seconds: Uptime in seconds
-        """
         self.controller_uptime_seconds.set(uptime_seconds)
 
     def record_temperature_error(self, sensor_type: str = "unknown") -> None:
-        """Record temperature read error.
-
-        Args:
-            sensor_type: Type of sensor that failed
-        """
         self.temperature_read_errors_total.labels(
             sensor_type=sensor_type).inc()
-        logger.warning("Temperature read error recorded",
-                       sensor_type=sensor_type)
+        logger.warning(
+            "Temperature read error recorded - sensor: %s", sensor_type)
 
     def record_gpio_error(self, operation: str) -> None:
-        """Record GPIO error.
-
-        Args:
-            operation: GPIO operation that failed
-        """
         self.gpio_errors_total.labels(operation=operation).inc()
-        logger.warning("GPIO error recorded", operation=operation)
+        logger.warning("GPIO error recorded - operation: %s", operation)
