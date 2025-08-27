@@ -24,7 +24,6 @@ class GPIOController:
         self.pwm_pin = pwm_pin
         self._enable_gpio: Optional[mraa.Gpio] = None
         self._pwm_gpio: Optional[mraa.Pwm] = None
-        self._current_duty_cycle = 1.0
         self._is_initialized = False
 
     def initialize(self) -> None:
@@ -100,7 +99,6 @@ class GPIOController:
             # Convert duty cycle to PWM value (1.0 = full speed, 0.0 = off)
             pwm_value = 1.0 - duty_cycle
             self._pwm_gpio.write(pwm_value)
-            self._current_duty_cycle = duty_cycle
 
             logger.debug(
                 "Fan speed changed",
@@ -110,14 +108,6 @@ class GPIOController:
             )
         except Exception as e:
             raise GPIOError(f"Failed to set fan speed: {e}") from e
-
-    def get_current_duty_cycle(self) -> float:
-        """Get current fan duty cycle.
-
-        Returns:
-            Current duty cycle (0.0 to 1.0)
-        """
-        return self._current_duty_cycle
 
     def turn_off(self) -> None:
         """Turn off fan completely."""

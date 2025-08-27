@@ -1,15 +1,12 @@
 """Command-line interface for ROCK Pi PoE HAT controller."""
 
 import argparse
-import json
 import sys
-from typing import Optional
 
 import structlog
 
 from .config import Config
 from .controller import FanController
-from .exceptions import FanControllerError
 
 logger = structlog.get_logger(__name__)
 
@@ -54,7 +51,6 @@ def create_parser() -> argparse.ArgumentParser:
 Examples:
   %(prog)s start                    # Start fan controller
   %(prog)s stop                     # Stop fan controller
-  %(prog)s start --config config.json # Start with custom config
         """
     )
 
@@ -63,11 +59,6 @@ Examples:
 
     # Start command
     start_parser = subparsers.add_parser("start", help="Start fan controller")
-    start_parser.add_argument(
-        "--config", "-c",
-        type=str,
-        help="Path to configuration file"
-    )
     start_parser.add_argument(
         "--log-level",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -87,28 +78,6 @@ Examples:
     return parser
 
 
-def load_config(config_path: Optional[str] = None) -> Config:
-    """Load configuration from file or environment.
-
-    Args:
-        config_path: Path to configuration file
-
-    Returns:
-        Configuration object
-    """
-    if config_path:
-        try:
-            with open(config_path, "r") as f:
-                config_data = json.load(f)
-            return Config(**config_data)
-        except Exception as e:
-            logger.error("Failed to load config file",
-                         path=config_path, error=str(e))
-            raise FanControllerError(f"Config file error: {e}")
-    else:
-        return Config.from_env()
-
-
 def start_controller(args: argparse.Namespace) -> None:
     """Start the fan controller.
 
@@ -116,7 +85,7 @@ def start_controller(args: argparse.Namespace) -> None:
         args: Command line arguments
     """
     try:
-        config = load_config(args.config)
+        config = Config.from_env()
         setup_logging(args.log_level, args.log_format)
 
         controller = FanController(config)
@@ -137,7 +106,7 @@ def stop_controller(args: argparse.Namespace) -> None:
         args: Command line arguments
     """
     try:
-        config = load_config()
+        config = Config.from_env()
         controller = FanController(config)
         controller.stop()
         logger.info("Fan controller stopped")

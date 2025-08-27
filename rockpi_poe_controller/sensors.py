@@ -161,10 +161,6 @@ class CompositeTemperatureSensor(TemperatureSensor):
 
         return max_temp
 
-    def get_available_sensors(self) -> List[str]:
-        """Get list of available sensor names."""
-        return [type(sensor).__name__ for sensor in self.sensors if sensor.is_available()]
-
 
 def create_default_sensor_suite(metrics_collector: Optional[MetricsCollector] = None) -> CompositeTemperatureSensor:
     sensors = [

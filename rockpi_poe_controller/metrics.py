@@ -14,7 +14,7 @@ class MetricsCollector:
 
     def __init__(self, host: str = "0.0.0.0", port: int = 8000):
         """Initialize metrics collector.
-        
+
         Args:
             host: Host to bind metrics server
             port: Port to bind metrics server
@@ -36,7 +36,7 @@ class MetricsCollector:
             "rockpi_poe_fan_speed_percent",
             "Current fan speed as percentage"
         )
-        
+
         self.fan_enabled_gauge = Gauge(
             "rockpi_poe_fan_enabled",
             "Fan enabled status (1=enabled, 0=disabled)"
@@ -77,7 +77,8 @@ class MetricsCollector:
         try:
             start_http_server(self.port, addr=self.host)
             self._running = True
-            logger.info("Prometheus metrics server started", host=self.host, port=self.port)
+            logger.info("Prometheus metrics server started",
+                        host=self.host, port=self.port)
         except Exception as e:
             logger.error("Failed to start metrics server", error=str(e))
             raise
@@ -89,40 +90,41 @@ class MetricsCollector:
 
     def update_temperature(self, temperature: float, sensor_type: str = "composite") -> None:
         """Update temperature metrics.
-        
+
         Args:
             temperature: Temperature in Celsius
             sensor_type: Type of sensor (e.g., 'adc', 'cpu', 'gpu', 'composite')
         """
         self.temperature_gauge.labels(sensor_type=sensor_type).set(temperature)
-        
-        logger.debug("Temperature metrics updated", temperature=temperature, sensor_type=sensor_type)
+
+        logger.debug("Temperature metrics updated",
+                     temperature=temperature, sensor_type=sensor_type)
 
     def update_fan_speed(self, speed_percent: float) -> None:
         """Update fan speed metrics.
-        
+
         Args:
             speed_percent: Fan speed as percentage (0-100)
         """
         self.fan_speed_gauge.set(speed_percent)
         self.fan_speed_changes_total.inc()
-        
+
         logger.debug("Fan speed metrics updated", speed_percent=speed_percent)
 
     def update_fan_enabled(self, enabled: bool) -> None:
         """Update fan enabled status metrics.
-        
+
         Args:
             enabled: Whether fan is enabled
         """
         value = 1 if enabled else 0
         self.fan_enabled_gauge.set(value)
-        
+
         logger.debug("Fan enabled metrics updated", enabled=enabled)
 
     def update_uptime(self, uptime_seconds: float) -> None:
         """Update controller uptime metric.
-        
+
         Args:
             uptime_seconds: Uptime in seconds
         """
@@ -130,16 +132,18 @@ class MetricsCollector:
 
     def record_temperature_error(self, sensor_type: str = "unknown") -> None:
         """Record temperature read error.
-        
+
         Args:
             sensor_type: Type of sensor that failed
         """
-        self.temperature_read_errors_total.labels(sensor_type=sensor_type).inc()
-        logger.warning("Temperature read error recorded", sensor_type=sensor_type)
+        self.temperature_read_errors_total.labels(
+            sensor_type=sensor_type).inc()
+        logger.warning("Temperature read error recorded",
+                       sensor_type=sensor_type)
 
     def record_gpio_error(self, operation: str) -> None:
         """Record GPIO error.
-        
+
         Args:
             operation: GPIO operation that failed
         """

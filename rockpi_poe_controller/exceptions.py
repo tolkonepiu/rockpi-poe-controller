@@ -19,12 +19,6 @@ class SensorError(FanControllerError):
     pass
 
 
-class ConfigurationError(FanControllerError):
-    """Exception raised when configuration is invalid."""
-
-    pass
-
-
 class HardwareNotAvailableError(FanControllerError):
     """Exception raised when required hardware is not available."""
 
