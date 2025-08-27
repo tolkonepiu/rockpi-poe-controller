@@ -41,8 +41,8 @@ ENV PYTHONPATH=/usr/local/lib/python3.12/site-packages:$PYTHONPATH
 WORKDIR /app
 
 COPY requirements.txt ./
-COPY rockpi_poe/ ./rockpi_poe/
-COPY main.py ./
+COPY rockpi_poe_controller/ ./rockpi_poe_controller/
+COPY rockpi_poe.py ./
 
 RUN python3 -m venv /app/venv && \
     . /app/venv/bin/activate && \
