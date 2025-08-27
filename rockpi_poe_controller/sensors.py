@@ -15,8 +15,6 @@ logger = structlog.get_logger(__name__)
 class TemperatureSensor(ABC):
     """Abstract base class for temperature sensors."""
 
-    def __init__(self):
-
     @abstractmethod
     def read_temperature(self) -> float:
         """Read temperature from sensor."""
@@ -112,11 +110,11 @@ class CompositeTemperatureSensor(TemperatureSensor):
                     )
 
         if not temperatures:
-            self._record_error(self.sensor_type())
+            self.metrics_collector.record_temperature_error(self.sensor_type())
             raise SensorError("No temperature sensors are available")
 
         max_temp = max(temperatures)
-        self._record_temperature(max_temp, self.sensor_type())
+        self.metrics_collector.update_temperature(max_temp, self.sensor_type())
 
         logger.debug(
             "Composite temperature read",
