@@ -1,7 +1,5 @@
 """Configuration management for ROCK Pi PoE HAT controller."""
 
-import os
-
 from pydantic import BaseModel, Field, validator
 from pydantic_settings import BaseSettings
 
@@ -10,13 +8,13 @@ class TemperatureLevels(BaseModel):
     """Temperature thresholds for fan speed levels."""
 
     level_0: int = Field(default=40, ge=0, le=100,
-                         description="Temperature for 25% fan speed")
+                         description="Temperature for 25% fan speed", alias="lv0")
     level_1: int = Field(default=45, ge=0, le=100,
-                         description="Temperature for 50% fan speed")
+                         description="Temperature for 50% fan speed", alias="lv1")
     level_2: int = Field(default=50, ge=0, le=100,
-                         description="Temperature for 75% fan speed")
+                         description="Temperature for 75% fan speed", alias="lv2")
     level_3: int = Field(default=55, ge=0, le=100,
-                         description="Temperature for 100% fan speed")
+                         description="Temperature for 100% fan speed", alias="lv3")
 
     @validator("level_1")
     def validate_level_1(cls, v, values):
@@ -41,7 +39,10 @@ class TemperatureLevels(BaseModel):
 
 
 class Config(BaseSettings):
-    """Main configuration class for the fan controller."""
+    class Config:
+        env_prefix = "POE_"
+        env_nested_delimiter = "__"
+        case_sensitive = False
 
     # Temperature thresholds
     temperature_levels: TemperatureLevels = Field(
@@ -52,16 +53,6 @@ class Config(BaseSettings):
         default=16, description="GPIO pin for fan enable/disable")
     fan_pwm_pin: int = Field(
         default=13, description="GPIO pin for fan PWM control")
-
-    # Sensor configuration
-    adc_device_path: str = Field(
-        default="/sys/bus/iio/devices/iio:device0/in_voltage0_raw",
-        description="Path to ADC device for temperature sensor"
-    )
-    thermal_zone_cpu: int = Field(
-        default=0, description="Thermal zone for CPU temperature")
-    thermal_zone_gpu: int = Field(
-        default=1, description="Thermal zone for GPU temperature")
 
     # Control parameters
     update_interval: float = Field(
@@ -81,21 +72,3 @@ class Config(BaseSettings):
         default="json",
         description="Log format (json or text)"
     )
-
-    class Config:
-        """Pydantic configuration."""
-        env_prefix = "POE_"
-        env_nested_delimiter = "__"
-        case_sensitive = False
-
-    @classmethod
-    def from_env(cls) -> "Config":
-        """Create configuration from environment variables."""
-        return cls(
-            temperature_levels=TemperatureLevels(
-                level_0=int(os.getenv("POE_LV0", "40")),
-                level_1=int(os.getenv("POE_LV1", "45")),
-                level_2=int(os.getenv("POE_LV2", "50")),
-                level_3=int(os.getenv("POE_LV3", "55")),
-            )
-        )

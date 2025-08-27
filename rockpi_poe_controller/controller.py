@@ -134,21 +134,17 @@ class FanController:
                     enabled=self._current_enabled
                 )
 
-                # Wait for next cycle
-                time.sleep(self.config.update_interval)
-
             except SensorError as e:
                 logger.error("Sensor error in control loop", error=str(e))
                 self.metrics.record_temperature_error()
-                time.sleep(self.config.update_interval)
 
             except GPIOError as e:
                 logger.error("GPIO error in control loop", error=str(e))
                 self.metrics.record_gpio_error("control_loop")
-                time.sleep(self.config.update_interval)
 
             except Exception as e:
                 logger.error("Unexpected error in control loop", error=str(e))
+            finally:
                 time.sleep(self.config.update_interval)
 
     def _calculate_fan_speed(self, temperature: float) -> tuple[float, float]:

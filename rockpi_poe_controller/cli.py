@@ -85,7 +85,7 @@ def start_controller(args: argparse.Namespace) -> None:
         args: Command line arguments
     """
     try:
-        config = Config.from_env()
+        config = Config()
         setup_logging(args.log_level, args.log_format)
 
         controller = FanController(config)
