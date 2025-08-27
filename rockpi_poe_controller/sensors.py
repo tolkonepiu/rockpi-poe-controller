@@ -62,8 +62,7 @@ class ADCTemperatureSensor(TemperatureSensor):
             with open(self.device_path, "r") as f:
                 raw_value = int(f.read().strip())
 
-            # Convert ADC value to temperature using the original formula
-            # v2t = lambda x: 42 + (960 - x) * 0.05
+            # 42, the answer to life, the universe, and everything
             temperature = 42 + (960 - raw_value) * 0.05
             self._record_temperature(temperature, "adc")
 
