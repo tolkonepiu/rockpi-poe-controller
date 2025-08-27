@@ -15,7 +15,7 @@ class GPIOController:
 
     def __init__(self, enable_pin: int = 16, pwm_pin: int = 13):
         """Initialize GPIO controller.
-        
+
         Args:
             enable_pin: GPIO pin for fan enable/disable
             pwm_pin: GPIO pin for PWM control
@@ -29,7 +29,7 @@ class GPIOController:
 
     def initialize(self) -> None:
         """Initialize GPIO pins.
-        
+
         Raises:
             HardwareNotAvailableError: If GPIO pins are not available
         """
@@ -49,7 +49,8 @@ class GPIOController:
 
         except Exception as e:
             logger.error("Failed to initialize GPIO", error=str(e))
-            raise HardwareNotAvailableError(f"GPIO initialization failed: {e}") from e
+            raise HardwareNotAvailableError(
+                f"GPIO initialization failed: {e}") from e
 
     def is_available(self) -> bool:
         """Check if GPIO controller is available."""
@@ -62,10 +63,10 @@ class GPIOController:
 
     def set_fan_enable(self, enabled: bool) -> None:
         """Enable or disable fan.
-        
+
         Args:
             enabled: True to enable fan, False to disable
-            
+
         Raises:
             GPIOError: If GPIO operation fails
         """
@@ -75,16 +76,17 @@ class GPIOController:
         try:
             value = 1 if enabled else 0
             self._enable_gpio.write(value)
-            logger.info("Fan enable state changed", enabled=enabled, pin=self.enable_pin)
+            logger.info("Fan enable state changed",
+                        enabled=enabled, pin=self.enable_pin)
         except Exception as e:
             raise GPIOError(f"Failed to set fan enable: {e}") from e
 
     def set_fan_speed(self, duty_cycle: float) -> None:
         """Set fan speed using PWM duty cycle.
-        
+
         Args:
             duty_cycle: PWM duty cycle (0.0 to 1.0, where 1.0 is full speed)
-            
+
         Raises:
             GPIOError: If GPIO operation fails
         """
@@ -99,7 +101,7 @@ class GPIOController:
             pwm_value = 1.0 - duty_cycle
             self._pwm_gpio.write(pwm_value)
             self._current_duty_cycle = duty_cycle
-            
+
             logger.debug(
                 "Fan speed changed",
                 duty_cycle=duty_cycle,
@@ -111,7 +113,7 @@ class GPIOController:
 
     def get_current_duty_cycle(self) -> float:
         """Get current fan duty cycle.
-        
+
         Returns:
             Current duty cycle (0.0 to 1.0)
         """

@@ -16,7 +16,7 @@ logger = structlog.get_logger(__name__)
 
 def setup_logging(log_level: str = "INFO", log_format: str = "text") -> None:
     """Setup structured logging.
-    
+
     Args:
         log_level: Logging level
         log_format: Log format (json or text)
@@ -58,7 +58,8 @@ Examples:
         """
     )
 
-    subparsers = parser.add_subparsers(dest="command", help="Available commands")
+    subparsers = parser.add_subparsers(
+        dest="command", help="Available commands")
 
     # Start command
     start_parser = subparsers.add_parser("start", help="Start fan controller")
@@ -88,10 +89,10 @@ Examples:
 
 def load_config(config_path: Optional[str] = None) -> Config:
     """Load configuration from file or environment.
-    
+
     Args:
         config_path: Path to configuration file
-        
+
     Returns:
         Configuration object
     """
@@ -101,7 +102,8 @@ def load_config(config_path: Optional[str] = None) -> Config:
                 config_data = json.load(f)
             return Config(**config_data)
         except Exception as e:
-            logger.error("Failed to load config file", path=config_path, error=str(e))
+            logger.error("Failed to load config file",
+                         path=config_path, error=str(e))
             raise FanControllerError(f"Config file error: {e}")
     else:
         return Config.from_env()
@@ -109,18 +111,18 @@ def load_config(config_path: Optional[str] = None) -> Config:
 
 def start_controller(args: argparse.Namespace) -> None:
     """Start the fan controller.
-    
+
     Args:
         args: Command line arguments
     """
     try:
         config = load_config(args.config)
         setup_logging(args.log_level, args.log_format)
-        
+
         controller = FanController(config)
         logger.info("Starting fan controller")
         controller.start()
-        
+
     except KeyboardInterrupt:
         logger.info("Received interrupt signal")
     except Exception as e:
@@ -130,7 +132,7 @@ def start_controller(args: argparse.Namespace) -> None:
 
 def stop_controller(args: argparse.Namespace) -> None:
     """Stop the fan controller.
-    
+
     Args:
         args: Command line arguments
     """
@@ -139,10 +141,11 @@ def stop_controller(args: argparse.Namespace) -> None:
         controller = FanController(config)
         controller.stop()
         logger.info("Fan controller stopped")
-        
+
     except Exception as e:
         logger.error("Failed to stop controller", error=str(e))
         sys.exit(1)
+
 
 def main() -> None:
     """Main CLI entry point."""
@@ -161,7 +164,7 @@ def main() -> None:
         else:
             parser.print_help()
             sys.exit(1)
-            
+
     except KeyboardInterrupt:
         logger.info("Interrupted by user")
         sys.exit(0)

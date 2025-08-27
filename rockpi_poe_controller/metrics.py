@@ -1,10 +1,9 @@
 """Prometheus metrics for ROCK Pi PoE HAT controller."""
 
 import threading
-import time
 from typing import Optional
 
-from prometheus_client import Gauge, Histogram, start_http_server
+from prometheus_client import Gauge, start_http_server
 import structlog
 
 logger = structlog.get_logger(__name__)

@@ -61,4 +61,4 @@ ENV POE_LV0=40 \
 # Metrics
 EXPOSE 8000
 
-CMD ["/app/venv/bin/python", "main.py", "start"]
+CMD ["/app/venv/bin/python", "rockpi_poe.py", "start"]

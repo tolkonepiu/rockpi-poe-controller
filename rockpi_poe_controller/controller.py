@@ -11,7 +11,7 @@ from .config import Config
 from .exceptions import FanControllerError, SensorError, GPIOError
 from .gpio import GPIOController
 from .metrics import MetricsCollector
-from .sensors import CompositeTemperatureSensor, create_default_sensor_suite
+from .sensors import create_default_sensor_suite
 
 logger = structlog.get_logger(__name__)
 
@@ -26,15 +26,15 @@ class FanController:
             config: Configuration object
         """
         self.config = config
-        self.gpio = GPIOController(
-            enable_pin=config.fan_enable_pin,
-            pwm_pin=config.fan_pwm_pin
-        )
-        self.sensors = create_default_sensor_suite()
         self.metrics = MetricsCollector(
             host=config.metrics_host,
             port=config.metrics_port
         )
+        self.gpio = GPIOController(
+            enable_pin=config.fan_enable_pin,
+            pwm_pin=config.fan_pwm_pin
+        )
+        self.sensors = create_default_sensor_suite(metrics_collector=self.metrics)
         
         self._running = False
         self._start_time = None
@@ -115,9 +115,6 @@ class FanController:
             try:
                 # Read temperature
                 temperature = self.sensors.read_temperature()
-                
-                # Update metrics
-                self.metrics.update_temperature(temperature)
                 if self._start_time:
                     uptime = time.time() - self._start_time
                     self.metrics.update_uptime(uptime)
