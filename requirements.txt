@@ -1,4 +1,4 @@
 prometheus-client==0.22.1
 pydantic==2.11.7
 pydantic-settings==2.10.1
-structlog==23.1.0
+structlog==23.3.0
