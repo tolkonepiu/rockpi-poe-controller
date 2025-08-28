@@ -83,9 +83,9 @@ def main() -> None:
 
     try:
         if args.command == "start":
-            start_controller(args)
+            start_controller()
         elif args.command == "stop":
-            stop_controller(args)
+            stop_controller()
         else:
             parser.print_help()
             sys.exit(1)
