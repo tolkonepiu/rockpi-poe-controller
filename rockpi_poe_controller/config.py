@@ -29,9 +29,6 @@ class Config(BaseSettings):
     # Control parameters
     update_interval: float = Field(
         default=10.0, ge=1.0, le=300.0, description="Temperature check interval in seconds")
-    fan_startup_delay: float = Field(
-        default=2.0, ge=0.0, le=10.0, description="Delay before starting fan in seconds")
-
     # Metrics configuration
     metrics_host: str = Field(
         default="0.0.0.0", description="Host for Prometheus metrics")

@@ -94,6 +94,8 @@ class CompositeTemperatureSensor(TemperatureSensor):
                     temperatures.append(temp)
                     logger.debug("Sensor %s temperature: %.1f°C",
                                  sensor.sensor_type(), temp)
+                    self.metrics_collector.update_temperature(
+                        temp, sensor.sensor_type())
                 except SensorError as e:
                     logger.warning("Sensor %s failed: %s",
                                    sensor.sensor_type(), str(e))
@@ -104,7 +106,8 @@ class CompositeTemperatureSensor(TemperatureSensor):
             raise SensorError("No temperature sensors are available")
 
         max_temp = max(temperatures)
-        self.metrics_collector.update_temperature(max_temp, self.sensor_type())
+        self.metrics_collector.update_temperature(
+            max_temp, f"{self.sensor_type()}_max")
 
         return max_temp
 

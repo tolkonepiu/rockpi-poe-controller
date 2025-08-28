@@ -105,7 +105,7 @@ class MetricsCollector:
     def update_uptime(self, uptime_seconds: float) -> None:
         self.controller_uptime_seconds.set(uptime_seconds)
 
-    def record_temperature_error(self, sensor_type: str = "unknown") -> None:
+    def record_temperature_error(self, sensor_type: str) -> None:
         self.temperature_read_errors_total.labels(
             sensor_type=sensor_type).inc()
         logger.warning(
