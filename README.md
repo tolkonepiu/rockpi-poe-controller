@@ -38,6 +38,9 @@ docker run -d \
 
 ### Local Installation
 
+First, install the [MRAA library](https://github.com/eclipse/mraa) for GPIO
+communication, then run the following commands:
+
 ```bash
 # Clone the repository
 git clone https://github.com/tolkonepiu/rockpi-poe-controller.git
@@ -47,11 +50,11 @@ cd rockpi-poe-controller
 python3 -m venv venv
 source venv/bin/activate
 
-# Install dependencies
+# Install Python dependencies
 pip install -r requirements.txt
 
 # Run the controller
-python rockpi_poe.py start
+python src/main.py start
 ```
 
 ### Kubernetes

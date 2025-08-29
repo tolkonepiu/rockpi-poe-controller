@@ -1,54 +1,53 @@
-FROM alpine:3.22.1 AS builder
+FROM python:3.12-alpine3.22 AS base
 
-RUN apk add --no-cache \
-    build-base \
-    cmake \
-    git \
-    python3-dev \
-    py3-pip \
-    pkgconfig \
-    swig \
-    json-c-dev \
-    linux-headers
-
-# Build mraa from source
-WORKDIR /tmp
-RUN git clone https://github.com/eclipse/mraa.git && \
-    mkdir mraa/build && \
-    cd mraa/build && \
-    cmake .. \
-      -DPYTHON3_INCLUDE_DIR=$(python3 -c "import sysconfig; print(sysconfig.get_path('include'))") \
-      -DPYTHON3_LIBRARY=$(python3 -c "import sysconfig; print(sysconfig.get_config_var('LIBDIR'))") \
-      -DBUILDSWIGPYTHON=ON \
-      -DCMAKE_INSTALL_PREFIX=/usr/local && \
-    make -j$(nproc) && \
-    make install
-
-FROM alpine:3.22.1
-
-RUN apk add --no-cache \
-    python3 \
-    json-c
-
-COPY --from=builder /usr/local/lib/python3.12/site-packages/ /usr/local/lib/python3.12/site-packages/
-COPY --from=builder /usr/local/lib/libmraa* /usr/local/lib/
-COPY --from=builder /usr/local/include/mraa* /usr/local/include/
-
-RUN ldconfig /usr/local/lib
-
-ENV PYTHONPATH=/usr/local/lib/python3.12/site-packages:$PYTHONPATH
+FROM base AS compiler
 
 WORKDIR /app
 
-COPY requirements.txt ./
-COPY rockpi_poe_controller/ ./rockpi_poe_controller/
-COPY rockpi_poe.py ./
+COPY src .
 
-RUN python3 -m venv /app/venv && \
-    . /app/venv/bin/activate && \
-    pip install --no-cache-dir -r requirements.txt
+RUN python3 -m compileall -b -f . && \
+    find . -name "*.py" -type f -delete
 
-# Metrics
-EXPOSE 8000
+FROM base AS dep_installer
 
-CMD ["/app/venv/bin/python", "rockpi_poe.py", "start"]
+WORKDIR /tmp
+
+COPY requirements.txt .
+
+RUN apk add --no-cache build-base cmake git linux-headers swig && \
+    pip install --upgrade pip wheel && \
+    pip install -r requirements.txt && \
+    pip uninstall -y pip wheel && \
+    git clone https://github.com/eclipse/mraa.git && \
+    mkdir mraa/build && \
+    cd mraa/build && \
+    cmake .. \
+      -DBUILDSWIG=ON \
+      -DBUILDSWIGPYTHON=ON \
+      -DINSTALLTOOLS=OFF \
+      -DENABLEEXAMPLES=OFF \
+      -DBUILDTESTS=OFF \
+      -DJSONPLAT=OFF \
+      -DUSEPYTHON3TESTS=OFF && \
+    make -j$(nproc) && \
+    make install && \
+    apk del build-base git cmake linux-headers swig && \
+    cd /usr/local/lib/python3.12/ && \
+    mv dist-packages/* site-packages/ && \
+    python3 -m compileall -b -f site-packages/ && \
+    find site-packages/ -name "*.py" -type f -delete && \
+    find . -name "__pycache__" -type d -exec rm -rf {} +
+
+FROM base
+
+COPY --from=dep_installer /usr/local /usr/local
+
+RUN apk add --no-cache libstdc++ && \
+    ldconfig /usr/local/lib
+
+WORKDIR /app
+
+COPY --from=compiler /app .
+
+ENTRYPOINT ["python3", "-u", "main.pyc", "start"]
