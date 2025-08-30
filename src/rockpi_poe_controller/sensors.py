@@ -99,7 +99,7 @@ class CompositeTemperatureSensor(TemperatureSensor):
                 except SensorError as e:
                     logger.warning("Sensor %s failed: %s",
                                    sensor.sensor_type(), str(e))
-                    self.metrics.record_temperature_error(sensor.sensor_type())
+                    self.metrics_collector.record_temperature_error(sensor.sensor_type())
 
         if not temperatures:
             self.metrics_collector.record_temperature_error(self.sensor_type())

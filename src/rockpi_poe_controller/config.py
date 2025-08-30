@@ -35,5 +35,11 @@ class Config(BaseSettings):
     metrics_port: int = Field(
         default=8000, ge=1024, le=65535, description="Port for Prometheus metrics")
 
+    # Node identification
+    node_name: str = Field(
+        default="localhost", description="Node name for metrics labels")
+    node_ip: str = Field(
+        default="127.0.0.1", description="Node IP for metrics labels")
+
     # Logging
     log_level: str = Field(default="INFO", description="Logging level")

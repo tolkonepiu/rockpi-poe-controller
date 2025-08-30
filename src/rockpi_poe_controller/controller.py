@@ -18,10 +18,7 @@ class FanController:
 
     def __init__(self, config: Config):
         self.config = config
-        self.metrics = MetricsCollector(
-            host=config.metrics_host,
-            port=config.metrics_port
-        )
+        self.metrics = MetricsCollector(config)
         self.gpio = GPIOController(
             enable_pin=config.fan_enable_pin,
             pwm_pin=config.fan_pwm_pin
