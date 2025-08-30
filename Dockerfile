@@ -1,4 +1,4 @@
-FROM python:3.12-alpine3.22 AS base
+FROM python:3.12.11-alpine3.22 AS base
 
 FROM base AS compiler
 
@@ -33,7 +33,7 @@ RUN apk add --no-cache build-base cmake git linux-headers swig && \
     make -j$(nproc) && \
     make install && \
     apk del build-base git cmake linux-headers swig && \
-    cd /usr/local/lib/python3.12/ && \
+    cd $(python3 -c "import sysconfig; print(sysconfig.get_paths()['stdlib'])") && \
     mv dist-packages/* site-packages/ && \
     python3 -m compileall -b -f site-packages/ && \
     find site-packages/ -name "*.py" -type f -delete && \

@@ -1,6 +1,11 @@
 {
   $schema: "https://docs.renovatebot.com/renovate-schema.json",
-  extends: ["config:recommended", "helpers:pinGitHubActionDigests"],
+  extends: [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests",
+    "docker:pinDigests",
+  ],
+  dependencyDashboard: false,
   packageRules: [
     {
       matchUpdateTypes: ["major", "minor", "patch", "pin", "digest"],

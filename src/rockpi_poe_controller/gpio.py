@@ -33,6 +33,8 @@ class GPIOController:
             HardwareNotAvailableError: If GPIO pins are not available
         """
         try:
+            logger.info("Detected platform: %s", mraa.getPlatformName())
+
             # Initialize enable pin
             self._enable_gpio = mraa.Gpio(self.enable_pin)
             self._enable_gpio.dir(mraa.DIR_OUT)
