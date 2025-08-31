@@ -82,13 +82,12 @@ class GPIOController:
             raise ValueError("Duty cycle must be between 0.0 and 1.0")
 
         try:
-            # Convert duty cycle to PWM value (1.0 = full speed, 0.0 = off)
-            pwm_value = 1.0 - duty_cycle
-            self._pwm_gpio.write(pwm_value)
+            # Direct PWM value (0.0 = full speed, 1.0 = off)
+            self._pwm_gpio.write(duty_cycle)
 
             logger.debug(
-                "Fan speed changed: duty_cycle=%f, pwm_value=%f, pin: %d",
-                duty_cycle, pwm_value, self.pwm_pin
+                "Fan speed changed: duty_cycle=%f, pin: %d",
+                duty_cycle, self.pwm_pin
             )
         except Exception as e:
             raise GPIOError(f"Failed to set fan speed: {e}") from e
